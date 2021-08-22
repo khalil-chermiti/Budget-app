@@ -1,5 +1,3 @@
-// feature 1 : add items to list
-
 // model
 const budgetModel = (function () {
   //  the state
@@ -10,26 +8,35 @@ const budgetModel = (function () {
       inc: [],
     },
     totals: {
-      exp: [],
-      inc: [],
+      inc: 0,
+      exp: 0,
     },
+    budget : 0 ,
+    percentage : 0
   };
 
-  // expenses and incomes function constractors
-
+  // incomes function constractors
   function Income(id, desc, value) {
     this.id = id;
     this.desc = desc;
     this.value = value;
   }
 
+  // expenses function constractors
   function Expence(id, desc, value) {
     this.id = id;
     this.desc = desc;
     this.value = value;
   }
 
+  // calculate total inc and total exp
+  let calculateTotal = (type) => {
+    let sum = 0 ; 
+    data.allItems[type].forEach(el => sum += el.value) ; 
+    data.totals[type] = sum ;
+  }
   return {
+    expose: () => data,
     // adding item to the state
     addItem: function (type, desc, value) {
       let newItem, id;
@@ -40,8 +47,6 @@ const budgetModel = (function () {
       } else {
         id = data.allItems[type][data.allItems[type].length - 1].id + 1;
       }
-
-      console.log(id);
       // creating the item object
       if (type === "inc") {
         newItem = new Income(id, desc, value);
@@ -53,11 +58,48 @@ const budgetModel = (function () {
 
       return newItem;
     },
-    data,
+
+    // calculate the budget , inc , exp , perc 
+    calculateBudget : () => {
+
+      // calculating the total inc and exp 
+      calculateTotal('inc') ;
+      calculateTotal('exp') ;
+
+      // calculate the budget 
+      data.budget = data.totals.inc - data.totals.exp ;
+
+      // calculate the percentage
+      if (data.totals.inc > 0) {
+        data.percentage = Math.round((data.totals.exp / data.totals.inc ) * 100) ;  
+      } else {
+        data.percentage = -1;
+      }
+    } ,
+
+    // return the budget to use it for rendering 
+    getBudget : () => {
+      return {
+        totals : data.totals ,
+        budget : data.budget ,
+        percentage : data.percentage
+      }
+    }
   };
 })();
 
-// view
+
+
+
+
+
+
+
+
+
+
+
+// view 
 const budgetView = (function () {
   // dom items
   domItems = {
@@ -67,20 +109,29 @@ const budgetView = (function () {
     InputButton: ".add__btn",
     incomeList: ".income__list",
     expensesList: ".expenses__list",
+
+    budgetValue : ".budget__value",
+    incomeValue : ".budget__income--value" ,
+    expensesValue : ".budget__expenses--value",
+    expensesPerc : ".budget__expenses--percentage",
+
+    month : ".budget__title--month"
   };
 
   return {
-    //getting the input
+    //getting the fields input values
     getInput: () => {
       return {
         type: document.querySelector(domItems.inputType).value,
         desc: document.querySelector(domItems.inputDesc).value,
-        value: document.querySelector(domItems.inputValue).value,
+        value: Number(document.querySelector(domItems.inputValue).value),
       };
     },
+
+    // return dom items to use them in the controller 
     getDomStrings: () => domItems,
 
-    // adding new items to the lests
+    // render new items to the lists
     addListItem: (obj, type) => {
       let htmlEl, element;
 
@@ -127,8 +178,37 @@ const budgetView = (function () {
 
       inputsArr.forEach((el) => (el.value = ""));
     },
+
+    // render new budget values 
+    renderBudget : (bud) => {
+      document.querySelector(domItems.budgetValue).innerHTML = bud.budget ;
+      document.querySelector(domItems.incomeValue).innerHTML = '+ ' + bud.totals.inc ;
+      document.querySelector(domItems.expensesValue).innerHTML = '- ' + bud.totals.exp ;
+      document.querySelector(domItems.expensesPerc).innerHTML = bud.percentage + '%';
+    },
+
+    //display month 
+
+    displayMonth : () => {
+
+      var options = { month: 'long'};
+      let fullDate = new Date() ;
+      currentMonth = new Intl.DateTimeFormat('en-US', options).format(fullDate) ;
+      document.querySelector(domItems.month).innerHTML = `<b> ${currentMonth} </b>` ;
+      
+    }
   };
 })();
+
+
+
+
+
+
+
+
+
+
 
 // controller
 const budgetController = (function (model, view) {
@@ -136,19 +216,30 @@ const budgetController = (function (model, view) {
   // get Dom strings
   let DOM = view.getDomStrings();
 
-  // add item function
-  let addItem = () => {
+  // updating the budget
+  let updateBudget = () => {
+    // calculate the budget 
+    model.calculateBudget() ;
+    // return totals 
+    let budget = model.getBudget() ; 
+    // render the data 
+    view.renderBudget(budget) ;
+  }
 
+  // add items to list 
+  let addItem = () => {
     // get input values
     let input = view.getInput();
 
-    // check for required inputs 
-    if (!(input.desc === "" || input.value === "")) {
-
+    // check for required inputs
+    if (
+      input.type !== "" &&
+      input.desc !== "" &&
+      input.value !== "" &&
+      input.value !== 0
+    ) {
       // add item to state
       let item = model.addItem(input.type, input.desc, input.value);
-
-      console.log(item);
 
       // render item + clean up
 
@@ -156,7 +247,8 @@ const budgetController = (function (model, view) {
       view.clearInputFields();
 
       // calculate budget
-      // render budget
+      updateBudget();
+
     }
   };
 
@@ -170,8 +262,14 @@ const budgetController = (function (model, view) {
   };
 
   return {
+
+    // init function 
     init: () => {
       setUpEventListeners();
+      // rendering the budget with initial values (0s)
+      view.renderBudget(model.getBudget())
+
+      view.displayMonth() ;
     },
   };
 })(budgetModel, budgetView);
