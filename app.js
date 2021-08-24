@@ -11,8 +11,8 @@ const budgetModel = (function () {
       inc: 0,
       exp: 0,
     },
-    budget : 0 ,
-    percentage : 0
+    budget: 0,
+    percentage: 0,
   };
 
   // incomes function constractors
@@ -31,10 +31,10 @@ const budgetModel = (function () {
 
   // calculate total inc and total exp
   let calculateTotal = (type) => {
-    let sum = 0 ; 
-    data.allItems[type].forEach(el => sum += el.value) ; 
-    data.totals[type] = sum ;
-  }
+    let sum = 0;
+    data.allItems[type].forEach((el) => (sum += el.value));
+    data.totals[type] = sum;
+  };
   return {
     expose: () => data,
     // adding item to the state
@@ -59,50 +59,49 @@ const budgetModel = (function () {
       return newItem;
     },
 
-    // calculate the budget , inc , exp , perc 
-    calculateBudget : () => {
+    // calculate the budget , inc , exp , perc
+    calculateBudget: () => {
+      // calculating the total inc and exp
+      calculateTotal("inc");
+      calculateTotal("exp");
 
-      // calculating the total inc and exp 
-      calculateTotal('inc') ;
-      calculateTotal('exp') ;
-
-      // calculate the budget 
-      data.budget = data.totals.inc - data.totals.exp ;
+      // calculate the budget
+      data.budget = data.totals.inc - data.totals.exp;
 
       // calculate the percentage
       if (data.totals.inc > 0) {
-        data.percentage = Math.round((data.totals.exp / data.totals.inc ) * 100) ;  
+        data.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
       } else {
         data.percentage = -1;
       }
-    } ,
+    },
 
-    // return the budget to use it for rendering 
-    getBudget : () => {
+    // return the budget to use it for rendering
+    getBudget: () => {
       return {
-        totals : data.totals ,
-        budget : data.budget ,
-        percentage : data.percentage
-      }
-    }
+        totals: data.totals,
+        budget: data.budget,
+        percentage: data.percentage,
+      };
+    },
+    removeItem: (type, id) => {
+
+      // finding the item , its index and then remove it
+      data.allItems[type].map((el, ind) => {
+        if (el.id === Number(id)) {
+          data.allItems[type].splice(ind, 1);
+        }
+      });
+
+    },
   };
 })();
 
-
-
-
-
-
-
-
-
-
-
-
-// view 
+// view
 const budgetView = (function () {
   // dom items
   domItems = {
+    container: ".container",
     inputType: ".add__type",
     inputDesc: ".add__description",
     inputValue: ".add__value",
@@ -110,12 +109,12 @@ const budgetView = (function () {
     incomeList: ".income__list",
     expensesList: ".expenses__list",
 
-    budgetValue : ".budget__value",
-    incomeValue : ".budget__income--value" ,
-    expensesValue : ".budget__expenses--value",
-    expensesPerc : ".budget__expenses--percentage",
+    budgetValue: ".budget__value",
+    incomeValue: ".budget__income--value",
+    expensesValue: ".budget__expenses--value",
+    expensesPerc: ".budget__expenses--percentage",
 
-    month : ".budget__title--month"
+    month: ".budget__title--month",
   };
 
   return {
@@ -128,7 +127,7 @@ const budgetView = (function () {
       };
     },
 
-    // return dom items to use them in the controller 
+    // return dom items to use them in the controller
     getDomStrings: () => domItems,
 
     // render new items to the lists
@@ -138,7 +137,7 @@ const budgetView = (function () {
       if (type === "inc") {
         element = domItems.incomeList;
         htmlEl = `
-                <div class="item clearfix" id="income-${obj.id}">
+                <div class="item clearfix" id="inc-${obj.id}">
                     <div class="item__description">${obj.desc}</div>
                     <div class="right clearfix">
                         <div class="item__value">${obj.value}</div>
@@ -151,7 +150,7 @@ const budgetView = (function () {
       } else if (type === "exp") {
         element = domItems.expensesList;
         htmlEl = `
-                <div class="item clearfix" id="expense-${obj.id}">
+                <div class="item clearfix" id="exp-${obj.id}">
                     <div class="item__description">${obj.desc}</div>
                     <div class="right clearfix">
                         <div class="item__value">${obj.value}</div>
@@ -179,54 +178,53 @@ const budgetView = (function () {
       inputsArr.forEach((el) => (el.value = ""));
     },
 
-    // render new budget values 
-    renderBudget : (bud) => {
-      document.querySelector(domItems.budgetValue).innerHTML = bud.budget ;
-      document.querySelector(domItems.incomeValue).innerHTML = '+ ' + bud.totals.inc ;
-      document.querySelector(domItems.expensesValue).innerHTML = '- ' + bud.totals.exp ;
-      document.querySelector(domItems.expensesPerc).innerHTML = bud.percentage + '%';
+    // render new budget values
+    renderBudget: (bud) => {
+      document.querySelector(domItems.budgetValue).innerHTML = bud.budget;
+      document.querySelector(domItems.incomeValue).innerHTML =
+        "+ " + bud.totals.inc;
+      document.querySelector(domItems.expensesValue).innerHTML =
+        "- " + bud.totals.exp;
+      document.querySelector(domItems.expensesPerc).innerHTML =
+        bud.percentage + "%";
     },
 
-    //display month 
+    //display month
 
-    displayMonth : () => {
+    displayMonth: () => {
+      var options = { month: "long" };
+      let fullDate = new Date();
+      currentMonth = new Intl.DateTimeFormat("en-US", options).format(fullDate);
+      document.querySelector(
+        domItems.month
+      ).innerHTML = `<b> ${currentMonth} </b>`;
+    },
+    removeItem : (element) => {
 
-      var options = { month: 'long'};
-      let fullDate = new Date() ;
-      currentMonth = new Intl.DateTimeFormat('en-US', options).format(fullDate) ;
-      document.querySelector(domItems.month).innerHTML = `<b> ${currentMonth} </b>` ;
-      
+      // selecting the parentNode and using the removeChild method to remove the desired element 
+      let elementNode = document.getElementById(element) ;
+      elementNode.parentNode.removeChild(elementNode);
+
     }
   };
 })();
 
-
-
-
-
-
-
-
-
-
-
 // controller
 const budgetController = (function (model, view) {
-
   // get Dom strings
   let DOM = view.getDomStrings();
 
   // updating the budget
   let updateBudget = () => {
-    // calculate the budget 
-    model.calculateBudget() ;
-    // return totals 
-    let budget = model.getBudget() ; 
-    // render the data 
-    view.renderBudget(budget) ;
-  }
+    // calculate the budget
+    model.calculateBudget();
+    // return totals
+    let budget = model.getBudget();
+    // render the data
+    view.renderBudget(budget);
+  };
 
-  // add items to list 
+  // add items to list
   let addItem = () => {
     // get input values
     let input = view.getInput();
@@ -248,7 +246,34 @@ const budgetController = (function (model, view) {
 
       // calculate budget
       updateBudget();
+    }
+  };
 
+  // remove item from list
+
+  let removeItem = (event) => {
+
+    // this is apparently hard coded
+    let fullID , splitId, id, type;
+
+    fullId = event.target.parentNode.parentNode.parentNode.parentNode.id ;
+
+    // getting the id and the type
+    splitId = fullId.split("-");
+
+    // the id
+    id = splitId[1];
+
+    // the type
+    type = splitId[0];
+
+    if (splitId) {
+      // remove the item from the state
+      model.removeItem(type, id);
+      // delete the item from the UI
+      view.removeItem(fullId);
+      // update the budget
+      updateBudget();
     }
   };
 
@@ -259,17 +284,22 @@ const budgetController = (function (model, view) {
     document.addEventListener("keypress", function (event) {
       if (event.charCode === 13 || event.which === 13) addItem();
     });
+
+    document.querySelector(DOM.container).addEventListener("click", (event) => {
+      if (event.target.className === "ion-ios-close-outline") {
+        removeItem(event);
+      }
+    });
   };
 
   return {
-
-    // init function 
+    // init function
     init: () => {
       setUpEventListeners();
       // rendering the budget with initial values (0s)
-      view.renderBudget(model.getBudget())
+      view.renderBudget(model.getBudget());
 
-      view.displayMonth() ;
+      view.displayMonth();
     },
   };
 })(budgetModel, budgetView);
