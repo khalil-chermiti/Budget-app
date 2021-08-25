@@ -167,7 +167,16 @@ const budgetView = (function () {
 
     return `${type} ${int}.${dec}` ;
 
-  }
+  } ;
+
+  // iterate through a node list 
+  let NodeListForEach = (list , callback) => {
+    for(let i = 0 ; i < list.length ; i++) {
+      callback(list[i] , i) ;
+    }
+  };
+
+
   return {
     formatNumbers,
     //getting the fields input values
@@ -239,7 +248,6 @@ const budgetView = (function () {
     },
 
     //display month
-
     displayMonth: () => {
       var options = { month: "long" };
       let fullDate = new Date();
@@ -248,6 +256,8 @@ const budgetView = (function () {
         domItems.month
       ).innerHTML = `<b> ${currentMonth} </b>`;
     },
+
+    // remove item from the UI 
     removeItem : (element) => {
 
       // selecting the parentNode and using the removeChild method to remove the desired element 
@@ -255,16 +265,11 @@ const budgetView = (function () {
       elementNode.parentNode.removeChild(elementNode);
 
     }, 
+
+    // display each expence percentage 
     displayPercentages : (percentages) => {
       let elements = [];
       elements = document.querySelectorAll(domItems.itemPerc) ;
-      
-      // a function to loop through elements 
-      function NodeListForEach (list , callback) {
-        for(let i = 0 ; i < list.length ; i++) {
-          callback(list[i] , i) ;
-        }
-      }
       
       // in case there is items in the expence list , display its percentage 
       NodeListForEach(elements , (el , index) => {
@@ -274,6 +279,21 @@ const budgetView = (function () {
           el.textContent = '--'
         }
         }) ; 
+    } , 
+
+    // change focus on input type change 
+    changeFocus : () => {
+
+      // selecting the three input fields 
+      let fields = document.querySelectorAll(domItems.inputType + ',' + domItems.inputDesc + ',' + domItems.inputValue) ;
+
+      // toggling the red-focus class on each of the node list elements
+      NodeListForEach(fields , (cur) =>{
+        cur.classList.toggle('red-focus') ;
+      })
+
+      // toggling the red class on the input button 
+      document.querySelector(domItems.InputButton).classList.toggle('red') ;
     }
   };
 })();
@@ -378,6 +398,9 @@ const budgetController = (function (model, view) {
         removeItem(event);
       }
     });
+
+    document.querySelector(DOM.inputType).addEventListener('change' , view.changeFocus)
+    
   };
 
   return {
@@ -393,3 +416,6 @@ const budgetController = (function (model, view) {
 })(budgetModel, budgetView);
 
 budgetController.init();
+
+
+
