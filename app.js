@@ -12,7 +12,19 @@ const budgetModel = (function () {
       exp: 0,
     },
     budget: 0,
-    percentage: 0,
+    percentage: '--',
+  };
+
+  // calculate the percentage 
+  Expence.prototype.calcPerc = function (totalIncome){
+
+    if (totalIncome > 0)  {
+      this.percentage = Math.round((this.value  / totalIncome) * 100);
+      console.log(this.percentage) 
+    } else {
+      this.percentage = -1 ;
+    }
+
   };
 
   // incomes function constractors
@@ -20,14 +32,15 @@ const budgetModel = (function () {
     this.id = id;
     this.desc = desc;
     this.value = value;
-  }
+  };
 
   // expenses function constractors
   function Expence(id, desc, value) {
     this.id = id;
     this.desc = desc;
     this.value = value;
-  }
+    this.percentage = '--' ;
+  };
 
   // calculate total inc and total exp
   let calculateTotal = (type) => {
@@ -37,6 +50,7 @@ const budgetModel = (function () {
   };
   return {
     expose: () => data,
+
     // adding item to the state
     addItem: function (type, desc, value) {
       let newItem, id;
@@ -76,6 +90,20 @@ const budgetModel = (function () {
       }
     },
 
+    // calculate the percentages of all items 
+    calculatePercentages : () => {
+      data.allItems.exp.forEach( el => {
+        el.calcPerc(data.totals.inc)
+      })
+    },
+
+    // return the percentages to render them
+    getPercentages : () => {
+      let allPerc ;
+      allPerc = data.allItems.exp.map((el) =>  el.percentage )
+      return allPerc
+    },
+
     // return the budget to use it for rendering
     getBudget: () => {
       return {
@@ -113,6 +141,7 @@ const budgetView = (function () {
     incomeValue: ".budget__income--value",
     expensesValue: ".budget__expenses--value",
     expensesPerc: ".budget__expenses--percentage",
+    itemPerc : ".item__percentage" ,
 
     month: ".budget__title--month",
   };
@@ -205,6 +234,26 @@ const budgetView = (function () {
       let elementNode = document.getElementById(element) ;
       elementNode.parentNode.removeChild(elementNode);
 
+    }, 
+    displayPercentages : (percentages) => {
+      let elements = [];
+      elements = document.querySelectorAll(domItems.itemPerc) ;
+      
+      // a function to loop through elements 
+      function NodeListForEach (list , callback) {
+        for(let i = 0 ; i < list.length ; i++) {
+          callback(list[i] , i) ;
+        }
+      }
+      
+      // in case there is items in the expence list , display its percentage 
+      NodeListForEach(elements , (el , index) => {
+        if (elements.length > 0 ){
+          el.textContent = percentages[index] + ' %'
+        } else {
+          el.textContent = '--'
+        }
+        }) ; 
     }
   };
 })();
@@ -223,6 +272,19 @@ const budgetController = (function (model, view) {
     // render the data
     view.renderBudget(budget);
   };
+
+  let updatePercentages = () => {
+    let percs ;
+
+    // calculate the percentages 
+    model.calculatePercentages() ;
+
+    // get the percentages 
+    percs = model.getPercentages() ;
+    
+    // render the percentages 
+    view.displayPercentages(percs) ;
+  }
 
   // add items to list
   let addItem = () => {
@@ -246,6 +308,9 @@ const budgetController = (function (model, view) {
 
       // calculate budget
       updateBudget();
+
+      // update the percentages 
+      updatePercentages() ;
     }
   };
 
@@ -254,7 +319,7 @@ const budgetController = (function (model, view) {
   let removeItem = (event) => {
 
     // this is apparently hard coded
-    let fullID , splitId, id, type;
+    let fullId , splitId, id, type;
 
     fullId = event.target.parentNode.parentNode.parentNode.parentNode.id ;
 
@@ -274,6 +339,9 @@ const budgetController = (function (model, view) {
       view.removeItem(fullId);
       // update the budget
       updateBudget();
+      // update the percentages 
+      updatePercentages();
+
     }
   };
 
