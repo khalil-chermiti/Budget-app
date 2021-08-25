@@ -20,7 +20,6 @@ const budgetModel = (function () {
 
     if (totalIncome > 0)  {
       this.percentage = Math.round((this.value  / totalIncome) * 100);
-      console.log(this.percentage) 
     } else {
       this.percentage = -1 ;
     }
@@ -145,8 +144,32 @@ const budgetView = (function () {
 
     month: ".budget__title--month",
   };
+  let formatNumbers = (num , type) => {
+    let splitNum , int , dec , sign ;
 
+    // exp -2566.505
+    // gettind the absolute value and fixing the decimals to 2
+    num = Math.abs(num) ; // output : 2566.505
+    num = num.toFixed(2) ; // output : 2566.50
+    
+    splitNum = num.split('.')
+
+    int = splitNum[0] ; // output : 2566
+    dec = splitNum[1] ; // output : 50
+
+    if (int.length > 3){
+      int = int.substr(0 , int.length - 3 ) + ',' + int.substr(int.length - 3 , 3)
+      // output : 2,566
+    }
+
+    // generating the sign 
+    type == 'inc' ?  type = '+' : type = '-' ;
+
+    return `${type} ${int}.${dec}` ;
+
+  }
   return {
+    formatNumbers,
     //getting the fields input values
     getInput: () => {
       return {
@@ -169,7 +192,7 @@ const budgetView = (function () {
                 <div class="item clearfix" id="inc-${obj.id}">
                     <div class="item__description">${obj.desc}</div>
                     <div class="right clearfix">
-                        <div class="item__value">${obj.value}</div>
+                        <div class="item__value">${formatNumbers(obj.value , type)}</div>
                         <div class="item__delete">
                             <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button>
                         </div>
@@ -182,7 +205,7 @@ const budgetView = (function () {
                 <div class="item clearfix" id="exp-${obj.id}">
                     <div class="item__description">${obj.desc}</div>
                     <div class="right clearfix">
-                        <div class="item__value">${obj.value}</div>
+                        <div class="item__value">${formatNumbers(obj.value , type)}</div>
                         <div class="item__percentage">21%</div>
                         <div class="item__delete">
                             <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button>
@@ -210,12 +233,9 @@ const budgetView = (function () {
     // render new budget values
     renderBudget: (bud) => {
       document.querySelector(domItems.budgetValue).innerHTML = bud.budget;
-      document.querySelector(domItems.incomeValue).innerHTML =
-        "+ " + bud.totals.inc;
-      document.querySelector(domItems.expensesValue).innerHTML =
-        "- " + bud.totals.exp;
-      document.querySelector(domItems.expensesPerc).innerHTML =
-        bud.percentage + "%";
+      document.querySelector(domItems.incomeValue).innerHTML = formatNumbers(bud.totals.inc , 'inc')
+      document.querySelector(domItems.expensesValue).innerHTML = formatNumbers(bud.totals.exp , 'exp')
+      document.querySelector(domItems.expensesPerc).innerHTML = bud.percentage + "%";
     },
 
     //display month
